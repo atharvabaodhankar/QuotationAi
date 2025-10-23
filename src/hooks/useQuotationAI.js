@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import analytics from "../utils/analytics";
 
 function useQuotationAI() {
@@ -36,29 +37,12 @@ ${requirement}`;
     try {
       console.log('API Key:', import.meta.env.VITE_GEMINI_API_KEY ? 'Present' : 'Missing');
       
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${import.meta.env.VITE_GEMINI_API_KEY}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contents: [{ 
-              parts: [{ text: prompt }] 
-            }],
-          }),
-        }
-      );
+      // Initialize the Google GenAI client
+      const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
+      const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
-      console.log('Response status:', response.status);
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('API Error Response:', errorText);
-        throw new Error(`API Error: ${response.status} - ${errorText}`);
-      }
-
-      const data = await response.json();
-      const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+      const result = await model.generateContent(prompt);
+      const text = result.response.text();
       
       try {
         // Clean the response text to extract JSON

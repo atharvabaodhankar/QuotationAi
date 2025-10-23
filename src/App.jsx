@@ -19,7 +19,10 @@ function App() {
             QuotationAI ⚡
           </h1>
           <p className="text-gray-600">
-            Generate professional quotations instantly with AI
+            Free & Open Source AI-powered quotation generator
+          </p>
+          <p className="text-sm text-gray-500 mt-1">
+            Generate professional project quotations instantly
           </p>
         </div>
 
@@ -54,8 +57,25 @@ function App() {
 
         {/* Footer */}
         <footer className="text-center mt-12 py-6 text-gray-500 text-sm">
-          <p>Powered by Google Gemini AI • Built with React + Tailwind CSS</p>
-          <p className="mt-1">Generate professional quotations in seconds ⚡</p>
+          <p>🚀 Free & Open Source • Powered by Google Gemini AI</p>
+          <p className="mt-1">Built with React + Tailwind CSS • No signup required</p>
+          <div className="mt-2">
+            <a 
+              href="https://github.com/yourusername/quotationai" 
+              className="text-blue-600 hover:text-blue-800 mx-2"
+              target="_blank" 
+              rel="noopener noreferrer"
+            >
+              GitHub
+            </a>
+            <span className="text-gray-400">•</span>
+            <a 
+              href="#" 
+              className="text-blue-600 hover:text-blue-800 mx-2"
+            >
+              Documentation
+            </a>
+          </div>
         </footer>
       </div>
 

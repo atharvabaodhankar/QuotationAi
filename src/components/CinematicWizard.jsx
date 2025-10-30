@@ -567,9 +567,9 @@ Budget Range: ${formData.budget}
         className="fixed inset-0 opacity-30 pointer-events-none"
         style={{
           background: `
-            radial-gradient(circle at 20% 50%, rgba(255, 71, 66, 0.1) 0%, transparent 50%),
-            radial-gradient(circle at 80% 20%, rgba(126, 87, 194, 0.1) 0%, transparent 50%),
-            radial-gradient(circle at 40% 80%, rgba(66, 165, 245, 0.1) 0%, transparent 50%)
+            radial-gradient(circle at 20% 50%, rgba(255, 71, 66, 0.1) 0%, #ffffff 50%),
+            radial-gradient(circle at 80% 20%, rgba(126, 87, 194, 0.1) 0%, #ffffff 50%),
+            radial-gradient(circle at 40% 80%, rgba(66, 165, 245, 0.1) 0%, #ffffff 50%)
           `,
           backgroundSize: "100% 100%",
         }}
@@ -1377,7 +1377,7 @@ Budget Range: ${formData.budget}
                     >
                       {/* Shimmer effect */}
                       <motion.div
-                        className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
+                        className="absolute inset-0 bg-gradient-to-r from-white/5 via-white/30 to-white/5"
                         animate={{
                           x: ["-100%", "100%"],
                         }}

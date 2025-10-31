@@ -1,5 +1,4 @@
-import React from 'react';
-import { Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer';
+import { Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer';
 
 // Using built-in fonts for better compatibility
 
@@ -28,7 +27,7 @@ const colors = {
 // Premium styles
 const styles = StyleSheet.create({
   page: {
-    fontFamily: 'Inter',
+    fontFamily: 'Helvetica',
     fontSize: 10,
     color: colors.gray[800],
     backgroundColor: colors.white,

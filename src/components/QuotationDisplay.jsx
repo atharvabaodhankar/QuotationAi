@@ -15,6 +15,7 @@ import {
   Loader
 } from 'lucide-react';
 import PremiumQuotationPDF from './PremiumQuotationPDF';
+import SimplePDF from './SimplePDF';
 import ExportButton from './ExportButton';
 import useCurrencyConverter from '../hooks/useCurrencyConverter';
 
@@ -105,31 +106,42 @@ function QuotationDisplay({ quote }) {
                 <Share2 size={16} />
                 Share
               </motion.button>
-              <PDFDownloadLink
-                document={<PremiumQuotationPDF quote={quote} discount={discount} currency={currency} />}
-                fileName={`quotation-${quote.projectTitle.toLowerCase().replace(/\s+/g, '-')}.pdf`}
+              <motion.button 
+                className="flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-gradient-primary rounded-lg shadow-sm hover:bg-red-600 transition-colors"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={async () => {
+                  console.log('Manual PDF download clicked!');
+                  console.log('Quote object:', quote);
+                  
+                  if (!quote) {
+                    alert('No quote data available!');
+                    return;
+                  }
+                  
+                  try {
+                    const { pdf } = await import('@react-pdf/renderer');
+                    console.log('Creating PDF with quote:', quote);
+                    const blob = await pdf(<SimplePDF quote={quote} />).toBlob();
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = `manual-quotation-${quote.projectTitle.toLowerCase().replace(/\s+/g, '-')}.pdf`;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    URL.revokeObjectURL(url);
+                    console.log('Manual download completed!');
+                  } catch (error) {
+                    console.error('Manual PDF generation failed:', error);
+                    console.error('Error details:', error);
+                    alert('PDF generation failed: ' + error.message);
+                  }
+                }}
               >
-                {({ blob, url, loading, error }) => (
-                  <motion.button 
-                    className="flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-gradient-primary rounded-lg shadow-sm hover:bg-red-600 transition-colors disabled:opacity-70"
-                    whileHover={{ scale: loading ? 1 : 1.02 }}
-                    whileTap={{ scale: loading ? 1 : 0.98 }}
-                    disabled={loading}
-                  >
-                    {loading ? (
-                      <>
-                        <Loader size={16} className="animate-spin" />
-                        Generating...
-                      </>
-                    ) : (
-                      <>
-                        <Download size={16} />
-                        Download PDF
-                      </>
-                    )}
-                  </motion.button>
-                )}
-              </PDFDownloadLink>
+                <Download size={16} />
+                Download PDF (Manual)
+              </motion.button>
             </div>
           </motion.div>
 

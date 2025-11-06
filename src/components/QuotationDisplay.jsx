@@ -1,24 +1,20 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { PDFDownloadLink } from "@react-pdf/renderer";
 import {
   Download,
   Share2,
   ChevronDown,
-  ChevronUp,
   Calendar,
   DollarSign,
   Clock,
   CheckCircle,
-  FileText,
   Settings,
   Loader,
   Sparkles,
 } from "lucide-react";
-import PremiumQuotationPDF from "./PremiumQuotationPDF";
-import SimplePDF from "./SimplePDF";
 import ExportButton from "./ExportButton";
 import useCurrencyConverter from "../hooks/useCurrencyConverter";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 function QuotationDisplay({ quote }) {
   const [discount, setDiscount] = useState(0);
@@ -29,133 +25,62 @@ function QuotationDisplay({ quote }) {
     timeline: false,
   });
   const [showNameSuggestions, setShowNameSuggestions] = useState(false);
-  const [selectedAppName, setSelectedAppName] = useState("");
   const [currentQuote, setCurrentQuote] = useState(quote);
-  const { convertCurrency, symbols, rates } = useCurrencyConverter();
+  const [aiSuggestions, setAiSuggestions] = useState([]);
+  const [loadingSuggestions, setLoadingSuggestions] = useState(false);
+  const { convertCurrency, rates } = useCurrencyConverter();
 
-  // App name suggestions based on project description
-  const generateAppNameSuggestions = () => {
-    const description = currentQuote.clientRequirementSummary.toLowerCase();
+  // Generate AI-powered app name suggestions
+  const generateAIAppNameSuggestions = async () => {
+    setLoadingSuggestions(true);
+    
+    const prompt = `You are a creative app naming expert. Based on the following project description, generate exactly 6 unique, catchy, and professional app names with short descriptions.
 
-    if (
-      description.includes("ai") ||
-      description.includes("plagiarism") ||
-      description.includes("detection") ||
-      description.includes("artificial intelligence") ||
-      description.includes("machine learning")
-    ) {
-      return [
-        { name: "PlagiarismGuard", desc: "AI-powered plagiarism detection" },
-        { name: "ContentShield", desc: "Smart content verification" },
-        { name: "OriginCheck", desc: "Originality detection system" },
-        { name: "PlagDetect", desc: "Advanced plagiarism scanner" },
-        { name: "AuthenticAI", desc: "AI authenticity checker" },
-        { name: "CopyGuardian", desc: "Content protection platform" },
-      ];
-    } else if (
-      description.includes("social") ||
-      description.includes("chat") ||
-      description.includes("messaging")
-    ) {
-      return [
-        { name: "ConnectCore", desc: "Social networking platform" },
-        { name: "ChatSphere", desc: "Modern messaging app" },
-        { name: "SocialSync", desc: "Community platform" },
-        { name: "LinkLive", desc: "Live social interactions" },
-        { name: "ShareSpark", desc: "Content sharing network" },
-        { name: "SocialHub", desc: "Social community center" },
-      ];
-    } else if (
-      description.includes("shop") ||
-      description.includes("ecommerce") ||
-      description.includes("buy") ||
-      description.includes("sell")
-    ) {
-      return [
-        { name: "ShopSphere", desc: "Global marketplace" },
-        { name: "CartCraft", desc: "Artisan marketplace" },
-        { name: "BuyBliss", desc: "Premium shopping experience" },
-        { name: "MarketMagic", desc: "Smart commerce platform" },
-        { name: "TradeTrend", desc: "Trending products hub" },
-        { name: "CommerceCore", desc: "E-commerce foundation" },
-      ];
-    } else if (
-      description.includes("health") ||
-      description.includes("fitness") ||
-      description.includes("workout")
-    ) {
-      return [
-        { name: "FitFusion", desc: "Comprehensive fitness tracker" },
-        { name: "HealthHub", desc: "Wellness management platform" },
-        { name: "VitalVibe", desc: "Health monitoring app" },
-        { name: "WellnessWave", desc: "Lifestyle optimization" },
-        { name: "FitForge", desc: "Workout planning tool" },
-        { name: "ActiveLife", desc: "Active lifestyle companion" },
-      ];
-    } else if (
-      description.includes("learn") ||
-      description.includes("education") ||
-      description.includes("study")
-    ) {
-      return [
-        { name: "LearnLab", desc: "Interactive learning platform" },
-        { name: "EduEdge", desc: "Educational advancement tool" },
-        { name: "SkillSphere", desc: "Skill development hub" },
-        { name: "StudySmart", desc: "Intelligent study assistant" },
-        { name: "KnowledgeKit", desc: "Learning resource center" },
-        { name: "EduCore", desc: "Educational foundation" },
-      ];
-    } else if (
-      description.includes("money") ||
-      description.includes("finance") ||
-      description.includes("budget")
-    ) {
-      return [
-        { name: "MoneyMind", desc: "Financial planning assistant" },
-        { name: "CashCraft", desc: "Budget management tool" },
-        { name: "WealthWise", desc: "Investment tracking platform" },
-        { name: "FinFlow", desc: "Financial dashboard" },
-        { name: "PennyPro", desc: "Expense optimization" },
-        { name: "FinanceCore", desc: "Financial management hub" },
-      ];
-    } else if (
-      description.includes("blockchain") ||
-      description.includes("crypto") ||
-      description.includes("decentralized") ||
-      description.includes("web3")
-    ) {
-      return [
-        { name: "BlockChain", desc: "Blockchain platform" },
-        { name: "CryptoCore", desc: "Cryptocurrency solution" },
-        { name: "DecentraHub", desc: "Decentralized platform" },
-        { name: "Web3Bridge", desc: "Web3 integration platform" },
-        { name: "ChainLink", desc: "Blockchain connector" },
-        { name: "CryptoVault", desc: "Secure crypto platform" },
-      ];
-    } else if (
-      description.includes("task") ||
-      description.includes("productivity") ||
-      description.includes("project") ||
-      description.includes("management")
-    ) {
-      return [
-        { name: "TaskMaster", desc: "Task management system" },
-        { name: "ProductivePro", desc: "Productivity enhancement" },
-        { name: "ProjectFlow", desc: "Project management tool" },
-        { name: "WorkWise", desc: "Smart work organizer" },
-        { name: "TaskForge", desc: "Task creation platform" },
-        { name: "ManageCore", desc: "Management foundation" },
-      ];
-    } else {
-      return [
+Project Description: "${currentQuote.clientRequirementSummary}"
+
+Requirements:
+- Names should be modern, memorable, and relevant to the project
+- Each name should be 1-2 words, easy to pronounce
+- Avoid generic names like "App", "System", "Platform" at the end
+- Make them brandable and unique
+- Include a brief 3-5 word description for each
+
+Return ONLY a JSON array in this exact format:
+[
+  {"name": "AppName1", "desc": "Brief description here"},
+  {"name": "AppName2", "desc": "Brief description here"},
+  {"name": "AppName3", "desc": "Brief description here"},
+  {"name": "AppName4", "desc": "Brief description here"},
+  {"name": "AppName5", "desc": "Brief description here"},
+  {"name": "AppName6", "desc": "Brief description here"}
+]`;
+
+    try {
+      const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
+      const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+
+      const result = await model.generateContent(prompt);
+      const text = result.response.text();
+      
+      // Clean the response text to extract JSON
+      const cleanText = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+      const suggestions = JSON.parse(cleanText);
+      
+      setAiSuggestions(suggestions);
+    } catch (error) {
+      console.error("Failed to generate AI suggestions:", error);
+      // Fallback to a few generic suggestions if AI fails
+      setAiSuggestions([
         { name: "AppCraft", desc: "Custom application solution" },
         { name: "DigitalEdge", desc: "Modern digital platform" },
         { name: "SmartFlow", desc: "Intelligent workflow system" },
         { name: "ProActive", desc: "Professional productivity tool" },
         { name: "InnovateLab", desc: "Innovation-driven platform" },
         { name: "TechCore", desc: "Technology foundation" },
-      ];
+      ]);
     }
+    
+    setLoadingSuggestions(false);
   };
 
   if (!quote) return null;
@@ -250,7 +175,12 @@ function QuotationDisplay({ quote }) {
                 }`}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                onClick={() => setShowNameSuggestions(!showNameSuggestions)}
+                onClick={async () => {
+                  setShowNameSuggestions(true);
+                  if (aiSuggestions.length === 0) {
+                    await generateAIAppNameSuggestions();
+                  }
+                }}
               >
                 <Sparkles size={16} />
                 {currentQuote.projectTitle.includes("To be decided") ||
@@ -916,48 +846,71 @@ Date: ${new Date().toLocaleDateString()}
             >
               <div className="text-center mb-6">
                 <h3 className="text-2xl font-bold text-gray-800 mb-2">
-                  ✨ Perfect App Names for Your Project
+                  ✨ AI-Generated App Names for Your Project
                 </h3>
                 <p className="text-gray-600">
                   Choose a name that captures your app's essence
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-                {generateAppNameSuggestions().map((suggestion, index) => (
-                  <motion.button
-                    key={suggestion.name}
-                    onClick={() => {
-                      setSelectedAppName(suggestion.name);
-                      // Update the quote with the new name
-                      const updatedQuote = {
-                        ...currentQuote,
-                        projectTitle: suggestion.name,
-                      };
-                      setCurrentQuote(updatedQuote);
-                      setShowNameSuggestions(false);
-                    }}
-                    className="p-4 text-left rounded-xl border-2 border-gray-200 hover:border-red-500 hover:bg-red-50 transition-all group"
-                    whileHover={{ scale: 1.02, y: -2 }}
-                    whileTap={{ scale: 0.98 }}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.1 }}
+              {loadingSuggestions ? (
+                <div className="flex flex-col items-center justify-center py-12">
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                    className="mb-4"
                   >
-                    <div className="font-bold text-gray-800 group-hover:text-red-600 transition-colors mb-1">
-                      {suggestion.name}
-                    </div>
-                    <div className="text-sm text-gray-500 group-hover:text-red-500 transition-colors">
-                      {suggestion.desc}
-                    </div>
-                  </motion.button>
-                ))}
-              </div>
+                    <Loader size={32} className="text-red-500" />
+                  </motion.div>
+                  <p className="text-gray-600 mb-2">AI is crafting perfect names...</p>
+                  <p className="text-sm text-gray-500">This may take a few seconds</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                  {aiSuggestions.map((suggestion, index) => (
+                    <motion.button
+                      key={suggestion.name}
+                      onClick={() => {
+                        // Update the quote with the new name
+                        const updatedQuote = {
+                          ...currentQuote,
+                          projectTitle: suggestion.name,
+                        };
+                        setCurrentQuote(updatedQuote);
+                        setShowNameSuggestions(false);
+                      }}
+                      className="p-4 text-left rounded-xl border-2 border-gray-200 hover:border-red-500 hover:bg-red-50 transition-all group"
+                      whileHover={{ scale: 1.02, y: -2 }}
+                      whileTap={{ scale: 0.98 }}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                    >
+                      <div className="font-bold text-gray-800 group-hover:text-red-600 transition-colors mb-1">
+                        {suggestion.name}
+                      </div>
+                      <div className="text-sm text-gray-500 group-hover:text-red-500 transition-colors">
+                        {suggestion.desc}
+                      </div>
+                    </motion.button>
+                  ))}
+                </div>
+              )}
 
-              <div className="text-center">
+              <div className="text-center space-y-3">
+                {!loadingSuggestions && aiSuggestions.length > 0 && (
+                  <motion.button
+                    onClick={generateAIAppNameSuggestions}
+                    className="px-6 py-2 text-red-600 hover:text-red-700 border border-red-200 hover:border-red-300 rounded-lg transition-colors"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    🔄 Generate New Names
+                  </motion.button>
+                )}
                 <motion.button
                   onClick={() => setShowNameSuggestions(false)}
-                  className="px-6 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+                  className="block mx-auto px-6 py-2 text-gray-600 hover:text-gray-800 transition-colors"
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                 >
